@@ -1,0 +1,5 @@
+content	gpbugzilla	content/
+locale	gpbugzilla	en-US	locale/en-US/
+skin	gpbugzilla	classic/1.0	skin/
+overlay	chrome://messenger/content/messenger.xul	chrome://gpbugzilla/content/thunderbirdOverlay.xul
+resource gpbugzilla ./
