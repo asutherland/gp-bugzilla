@@ -14,11 +14,12 @@
  * The Original Code is gp-bugzilla.
  *
  * The Initial Developer of the Original Code is
- * Mozilla Messaging, Inc..
+ * Mozilla Messaging, Inc.
  * Portions created by the Initial Developer are Copyright (C) 2008
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ *   Andrew Sutherland <asutherland@asutherland.org>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -34,17 +35,13 @@
  * 
  * ***** END LICENSE BLOCK ***** */
 
+Components.utils.import("resource://gpbugzilla/modules/attr_bug.js");
+
 var gpbugzilla = {
   onLoad: function() {
     // initialization code
     this.initialized = true;
     this.strings = document.getElementById("gpbugzilla-strings");
-  },
-  onMenuItemCommand: function(e) {
-    var promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
-                                  .getService(Components.interfaces.nsIPromptService);
-    promptService.alert(window, this.strings.getString("helloMessageTitle"),
-                                this.strings.getString("helloMessage"));
   },
 
 };
