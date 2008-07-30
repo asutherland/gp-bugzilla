@@ -90,7 +90,7 @@ let BugzillaAttr = {
       attributeName: "isBug",
       bind: true,
       bindName: "bug",
-      singular: false,
+      singular: true,
       subjectNouns: [Gloda.NOUN_MESSAGE],
       objectNoun: Gloda.lookupNoun("bug"),
       parameterNoun: null,
@@ -101,16 +101,17 @@ let BugzillaAttr = {
       actionType: "filter", actionTarget: Gloda.NOUN_MESSAGE,
       shortName: "is",
       makeConstraint: function(aAttrDef, aBug) {
-        return [BugzillaAttr._attrIsBug, null,
-                BugNoun.toAttributeValue(aBug)];
+        
+        return [BugzillaAttr._attrIsBug].concat(
+                BugNoun.toParamAndValue(aBug));
       },
       });
     Gloda.defineNounAction(Gloda.lookupNoun("bug"), {
       actionType: "filter", actionTarget: Gloda.NOUN_MESSAGE,
       shortName: "references",
       makeConstraint: function(aAttrDef, aBug) {
-        return [BugzillaAttr._attrReferencesBug, null,
-                BugNoun.toAttributeValue(aBug)];
+        return [BugzillaAttr._attrReferencesBug].concat(
+                BugNoun.toParamAndValue(aBug));
       },
       });
   },
@@ -127,7 +128,7 @@ let BugzillaAttr = {
         // it _is_ a bug!
         let bugNum = parseInt(match[1]);
         seenBugs[bugNum] = true;
-        attrs.push([this._attrIsBug, null, bugNum]);
+        attrs.push([this._attrIsBug, bugNum]);
       }
       
       while ((match = this._bugRegex.exec(aMimeMsg.body)) !== null) {
@@ -136,7 +137,7 @@ let BugzillaAttr = {
         let bugNum = parseInt(match[1]);
         if (!(bugNum in seenBugs)) {
           seenBugs[bugNum] = true;
-          attrs.push([this._attrReferencesBug, null, bugNum]);
+          attrs.push([this._attrReferencesBug, bugNum]);
         }
       }
       while ((match = this._bugLinkRegex.exec(aMimeMsg.body)) !== null) {
@@ -145,7 +146,7 @@ let BugzillaAttr = {
         let bugNum = parseInt(match[1]);
         if (!(bugNum in seenBugs)) {
           seenBugs[bugNum] = true;
-          attrs.push([this._attrReferencesBug, null, bugNum]);
+          attrs.push([this._attrReferencesBug, bugNum]);
         }
       }
     }

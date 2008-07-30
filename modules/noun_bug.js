@@ -63,16 +63,17 @@ Bug.prototype = {
   }
 };
 
-let BugNoun= {
+let BugNoun = {
   name: "bug",
   class: Bug,
   firstClass: false,
   
-  toAttributeValue: function gp_bug_noun_toAttributeValue(aBug) {
-    return aBug.number;
+  toParamAndValue: function gp_bug_noun_toParamAndValue(aBug) {
+    return [null, aBug.number];
   },
   
-  fromAttributeValue: function gp_bug_noun_fromAttributeValue(aAttrVal) {
+  fromParamAndValue: function gp_bug_noun_fromParamAndValue(aIgnoredParam,
+                                                             aAttrVal) {
     return new Bug(aAttrVal);
   }
 };

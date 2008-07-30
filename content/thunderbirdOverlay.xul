@@ -43,9 +43,4 @@
   <stringbundleset id="stringbundleset">
     <stringbundle id="gpbugzilla-strings" src="chrome://gpbugzilla/locale/gpbugzilla.properties"/>
   </stringbundleset>
-
-  <menupopup id="taskPopup">
-    <menuitem id="gpbugzilla-hello" label="&gpbugzilla.label;" 
-              oncommand="gpbugzilla.onMenuItemCommand(event);"/>
-  </menupopup>
 </overlay>
