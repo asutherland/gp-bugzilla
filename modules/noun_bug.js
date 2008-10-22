@@ -44,7 +44,7 @@ const Cu = Components.utils;
 
 Cu.import("resource://gloda/modules/log4moz.js");
 
-Cu.import("resource://gloda/modules/gloda.js");
+Cu.import("resource://gloda/modules/public.js");
 
 /**
  * We actually don't need this class for our current functionality, but at some
@@ -59,22 +59,29 @@ Bug.prototype = {
   get number() { return this._number; },
   
   toString: function() {
-    return "" + this._number;
+    return "Bug " + this._number;
   }
 };
 
 let BugNoun = {
   name: "bug",
   class: Bug,
-  firstClass: false,
+  allowsArbitraryAttrs: false,
+  
+  equals: function gp_bug_noun_equals(aBug, bBug) {
+    return aBug.number == bBug.number; 
+  },
+  
+  toJSON: function gp_bug_noun_toJSON(aBug) {
+    return aBug.number;
+  },
   
   toParamAndValue: function gp_bug_noun_toParamAndValue(aBug) {
     return [null, aBug.number];
   },
-  
-  fromParamAndValue: function gp_bug_noun_fromParamAndValue(aIgnoredParam,
-                                                             aAttrVal) {
-    return new Bug(aAttrVal);
+
+  fromJSON: function gp_bug_noun_fromJSON(aBugNumber) {
+    return new Bug(aBugNumber);
   }
 };
 

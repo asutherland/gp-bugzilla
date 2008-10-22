@@ -44,8 +44,7 @@ const Cu = Components.utils;
 
 Cu.import("resource://gloda/modules/log4moz.js");
 
-Cu.import("resource://gloda/modules/gloda.js");
-Cu.import("resource://gloda/modules/everybody.js");
+Cu.import("resource://gloda/modules/public.js");
 
 Cu.import("resource://gpbugzilla/modules/noun_bug.js");
 
@@ -66,6 +65,8 @@ let BugzillaAttr = {
     this._bugLinkRegex = new RegExp(
       "https://bugzilla\\.mozilla\\.org/show_bug\\.cgi\\?id=(\\d{4,7})", "gi");
     this._bugSubjectRegex = new RegExp("^\\[Bug (\\d{4,7})\\]");
+    this._changedRegex = new RegExp("^([^<\\n]+<[^>\\n]+>) changed:$", "m");
+    
     this.defineAttributes();
   },
 
@@ -75,85 +76,80 @@ let BugzillaAttr = {
       extensionName: EXT_NAME,
       attributeType: Gloda.kAttrDerived,
       attributeName: "bugsReferenced",
-      bind: true,
-      bindName: "bugsReferenced",
       singular: false,
       subjectNouns: [Gloda.NOUN_MESSAGE],
       objectNoun: Gloda.lookupNoun("bug"),
       parameterNoun: null,
-      explanation: "%{subject} mentions bug %{object}", // localize-me
       });
     this._attrIsBug = Gloda.defineAttribute({
       provider: this,
       extensionName: EXT_NAME,
       attributeType: Gloda.kAttrDerived,
-      attributeName: "isBug",
-      bind: true,
-      bindName: "bug",
+      attributeName: "bug",
       singular: true,
       subjectNouns: [Gloda.NOUN_MESSAGE],
       objectNoun: Gloda.lookupNoun("bug"),
       parameterNoun: null,
-      explanation: "%{subject} is bug %{object}", // localize-me
-      });
-    
-    Gloda.defineNounAction(Gloda.lookupNoun("bug"), {
-      actionType: "filter", actionTarget: Gloda.NOUN_MESSAGE,
-      shortName: "is",
-      makeConstraint: function(aAttrDef, aBug) {
-        
-        return [BugzillaAttr._attrIsBug].concat(
-                BugNoun.toParamAndValue(aBug));
-      },
-      });
-    Gloda.defineNounAction(Gloda.lookupNoun("bug"), {
-      actionType: "filter", actionTarget: Gloda.NOUN_MESSAGE,
-      shortName: "references",
-      makeConstraint: function(aAttrDef, aBug) {
-        return [BugzillaAttr._attrReferencesBug].concat(
-                BugNoun.toParamAndValue(aBug));
-      },
       });
   },
   
-  process: function gp_bug_attr_process(aGlodaMessage, aMsgHdr, aMimeMsg) {
-    let attrs = [];
+  process: function gp_bug_attr_process(aGlodaMessage, aRawReps, aIsNew,
+                                        aCallbackHandle) {
+    let aMsgHdr = aRawReps.header, aMimeMsg = aRawReps.mime;
     let seenBugs = {};
     if (aMimeMsg !== null) {
-      this._log.debug("got mime!");
       let match;
+      
+      let bugsReferenced = [];
       
       if ((aMsgHdr.author == "bugzilla-daemon@mozilla.org") &&
           (match = this._bugSubjectRegex.exec(aMsgHdr.subject)) !== null) {
         // it _is_ a bug!
+        // -- Create the bug attribute
         let bugNum = parseInt(match[1]);
         seenBugs[bugNum] = true;
-        attrs.push([this._attrIsBug, bugNum]);
+        aGlodaMessage.bug = new Bug(bugNum);
+
+        // -- Determine the actual author, if possible
+        // Modified messages start with a "Jim Bob <jim@bob> changed:" line,
+        //  which is the only way we can find out "Jim Bob" from the e-mail.
+        //  (That is, we might be able to get it by asking the server directly.)
+        // New messages do not.
+        let authorString;
+        // X-Bugzilla-Status: NEW
+        status = aMimeMsg.headers["x-bugzilla-status"];
+        authorString = aMimeMsg.headers["x-bugzilla-who"];
+        if (status != "NEW") {
+          let changedMatch = this._changedRegex.exec(aMimeMsg.body);
+          if (changedMatch)
+            authorString = changedMatch[1];
+        }
+        let [authorIdentities] = yield aCallbackHandle.pushAndGo(
+          Gloda.getOrCreateMailIdentities(aCallbackHandle, authorString))
+        if (authorIdentities.length)
+          aGlodaMessage.from = authorIdentities[0];
       }
       
       while ((match = this._bugRegex.exec(aMimeMsg.body)) !== null) {
-        this._log.debug("MATCH: " + match);
-        
         let bugNum = parseInt(match[1]);
         if (!(bugNum in seenBugs)) {
           seenBugs[bugNum] = true;
-          attrs.push([this._attrReferencesBug, bugNum]);
+          bugsReferenced.push(new Bug(bugNum));
         }
       }
       while ((match = this._bugLinkRegex.exec(aMimeMsg.body)) !== null) {
-        this._log.debug("MATCH: " + match);
-        
         let bugNum = parseInt(match[1]);
         if (!(bugNum in seenBugs)) {
           seenBugs[bugNum] = true;
-          attrs.push([this._attrReferencesBug, bugNum]);
+          bugsReferenced.push(new Bug(bugNum));
         }
       }
+    
+      if (bugsReferenced.length)
+        aGlodaMessage.bugsReferenced = bugsReferenced;
     }
 
-    this._log.debug("returning attributes: " + attrs);
-    
-    return attrs;
+    yield Gloda.kWorkDone;
   }
 };
 
