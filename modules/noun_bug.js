@@ -35,7 +35,10 @@
  * 
  * ***** END LICENSE BLOCK ***** */
 
-EXPORTED_SYMBOLS = ['Bug', 'BugNoun'];
+EXPORTED_SYMBOLS = ['Bug', 'BugNoun', 'BugAttachment', 'BugAttachmentNoun',
+                    'BugRequestActionNoun',
+                    'kBugRequest_Asked', 'kBugRequest_Granted',
+                    'kBugRequest_Denied'];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -47,6 +50,7 @@ Cu.import("resource://gloda/modules/log4moz.js");
 Cu.import("resource://gloda/modules/public.js");
 
 /**
+ * Represents a bug.
  * We actually don't need this class for our current functionality, but at some
  *  point we will issue requests against the server to flesh out our knowledge
  *  about the bug.  And then this will be handy.
@@ -71,18 +75,67 @@ let BugNoun = {
   equals: function gp_bug_noun_equals(aBug, bBug) {
     return aBug.number == bBug.number; 
   },
-  
   toJSON: function gp_bug_noun_toJSON(aBug) {
     return aBug.number;
   },
-  
   toParamAndValue: function gp_bug_noun_toParamAndValue(aBug) {
     return [null, aBug.number];
   },
-
   fromJSON: function gp_bug_noun_fromJSON(aBugNumber) {
     return new Bug(aBugNumber);
   }
 };
 
+/**
+ * Represents a bug attachment.
+ * We don't actually need this class for our current functionality, but it
+ *  could be useful to have this be its own object in the future.
+ */
+function BugAttachment(aAttachmentNumber) {
+  this._attachmentNumber = aAttachmentNumber;
+}
+
+BugAttachment.prototype = {
+  get attachmentNumber() { return this._attachmentNumber; },
+  toString: function() {
+    return "Attachment " + this._attachmentNumber;
+  }
+};
+
+let BugAttachmentNoun = {
+  name: "bug-attachment",
+  class: BugAttachment,
+  allowsArbitraryAttrs: false,
+  
+  equals: function gp_bug_noun_equals(aBugAttachment, bBugAttachment) {
+    return aBugAttachment.attachmentNumber == bBugAttachment.attachmentNumber; 
+  },
+  toJSON: function gp_bug_noun_toJSON(aBugAttachment) {
+    return aBugAttachment.attachmentNumber;
+  },
+  toParamAndValue: function gp_bug_noun_toParamAndValue(aBugAttachment) {
+    return [null, aBugAttachment.number];
+  },
+  fromJSON: function gp_bug_noun_fromJSON(aBugAttachmentNumber) {
+    return new BugAttachment(aBugAttachmentNumber);
+  }
+};
+
+const kBugRequest_Asked = 1;
+const kBugRequest_Granted = 2;
+const kBugRequest_Denied = 3;
+
+let BugRequestActionNoun = {
+  name: "bug-request-action",
+  class: Number,
+  allowsArbitraryAttrs: false,
+  
+  // we don't need toJSON/fromJSON for numbers...
+  toParamAndValue: function gp_bug_noun_toParamAndValue(aBugRequestVal) {
+    return [null, aBugRequestVal];
+  },
+}
+
 Gloda.defineNoun(BugNoun);
+Gloda.defineNoun(BugAttachmentNoun);
+Gloda.defineNoun(BugRequestActionNoun);
