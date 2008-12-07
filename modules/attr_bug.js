@@ -86,7 +86,7 @@ let BugzillaAttr = {
   _attrReferencesBug: null,
 
   init: function() {
-    this._log =  Log4Moz.Service.getLogger("gpbugzilla.attr_bug");
+    this._log =  Log4Moz.repository.getLogger("gpbugzilla.attr_bug");
     this._bugRegex = new RegExp("bug {1,2}#?(\\d{4,7})", "gi");
     this._bugLinkRegex = new RegExp(
       "https://bugzilla\\.mozilla\\.org/show_bug\\.cgi\\?id=(\\d{4,7})", "gi");
@@ -206,7 +206,6 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
     // "------- You are receiving this mail because: -------"
     // explanation
     if (bugType === kBugMessage_New) {
-this._log.debug("NEW case");
       let state = kPS_DoNotReply;
       let eatBlank = false;
       let key = null, value = null;
@@ -215,7 +214,6 @@ this._log.debug("NEW case");
         if (!line && eatBlank)
           continue;
         eatBlank = false;
-this._log.debug("state: " + state + " line: " + line);
         
         switch (state) {
           case kPS_DoNotReply:
@@ -268,7 +266,6 @@ this._log.debug("state: " + state + " line: " + line);
     // (1 newline)
     // "--", configure bugmail, you are receiving this mail because, etc.
     else if (bugType === kBugMessage_Changed) {
-this._log.debug("CHANGED case");
       let state = kPS_DoNotReply;
       let eatBlank = false;
       let done = false;
@@ -278,7 +275,6 @@ this._log.debug("CHANGED case");
         if (!line && eatBlank)
           continue;
         eatBlank = false;
-this._log.debug("state: " + state + " line: " + line);
         
         switch (state) {
           case kPS_DoNotReply:
@@ -359,7 +355,6 @@ this._log.debug("state: " + state + " line: " + line);
     // Comments after "------- Additional Comments from ", e-mail address may
     //  spill; can vaguely tell if there is no '>' on the line.
     else if (bugType == kBugMessage_Request) {
-this._log.debug("REQUEST case");
       let state = kPS_RequestExplanation;
       let eatBlank = false;
       let done = false;
@@ -368,7 +363,6 @@ this._log.debug("REQUEST case");
         if (!line && eatBlank)
           continue;
         eatBlank = false;
-this._log.debug("state: " + state + " line: " + line);
         
         switch (state) {
           case kPS_RequestExplanation:
@@ -421,7 +415,6 @@ this._log.debug("state: " + state + " line: " + line);
           break;
       }
     }
-    this._log.debug("CONTENT: " + aContent.getContentString());
     return true;
   },
   
