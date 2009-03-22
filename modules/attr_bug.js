@@ -420,16 +420,16 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
   
   process: function gp_bug_attr_process(aGlodaMessage, aRawReps, aIsNew,
                                         aCallbackHandle) {
-    let aMsgHdr = aRawReps.header, aMimeMsg = aRawReps.mime;
+    let aMimeMsg = aRawReps.mime;
     let seenBugs = {};
     if (aMimeMsg !== null) {
       let match;
       
       let bugsReferenced = [];
-      let meta = {subject: aMsgHdr.mime2DecodedSubject, bug: true};
+      let meta = {subject: aGlodaMessage.subject, bug: true};
       
-      if ((aMsgHdr.author == "bugzilla-daemon@mozilla.org") &&
-          (match = this._bugSubjectRegex.exec(aMsgHdr.subject)) !== null) {
+      if ((aGlodaMessage.from.value == "bugzilla-daemon@mozilla.org") &&
+          (match = this._bugSubjectRegex.exec(aGlodaMessage.subject)) !== null) {
         
         if (aRawReps.bodyLines && aRawReps.content)
           this.contentWhittle(aGlodaMessage, meta, aRawReps.bodyLines,
