@@ -5,7 +5,7 @@
  * 1.1 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
  * http://www.mozilla.org/MPL/
- * 
+ *
  * Software distributed under the License is distributed on an "AS IS" basis,
  * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
  * for the specific language governing rights and limitations under the
@@ -32,7 +32,7 @@
  * and other provisions required by the GPL or the LGPL. If you do not delete
  * the provisions above, a recipient may use your version of this file under
  * the terms of any one of the MPL, the GPL or the LGPL.
- * 
+ *
  * ***** END LICENSE BLOCK ***** */
 
 EXPORTED_SYMBOLS = [''];
@@ -43,7 +43,7 @@ const Cr = Components.results;
 const Cu = Components.utils;
 
 Cu.import("resource://app/modules/gloda/log4moz.js");
-Cu.import("resource://app/modules/gloda/public.js")
+Cu.import("resource://app/modules/gloda/public.js");
 
 Cu.import("resource://gpbugzilla/modules/noun_bug.js");
 
@@ -75,7 +75,7 @@ const REQUEST_MAP = {
   requested: kRequest_Asked,
   granted: kRequest_Granted,
   denied: kRequest_Denied
-}
+};
 
 let BugzillaAttr = {
   providerName: EXT_NAME,
@@ -109,9 +109,9 @@ let BugzillaAttr = {
     this._requestRegex = new RegExp("^" + emailSnip + " has " +
         "(asked|granted|denied) " + emailSnip + "(?:'s request)? " +
         "for ([^:]+):$");
-    
+
     this._attachRegex = new RegExp("^Created an attachment \\(id=(\\d+)\\)$");
-    
+
     this.defineAttributes();
   },
 
@@ -160,23 +160,23 @@ let BugzillaAttr = {
       });
 
   },
-  
+
   contentWhittle: function gp_bug_attr_contentWhittle(aGlodaMessage,
       aMeta, aBodyLines, aContent) {
     if (!aGlodaMessage.bug && !aMeta.bug) {
 this._log.debug("not a bug, bailing");
       return false;
     }
-    
+
     let subjectMatch = this._bugSubjectRegex.exec(aMeta.subject);
     if (!subjectMatch) {
 this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
       return false;
     }
-    
+
     // it's a bug.  we are the perfect fit.
     aContent.volunteerContent(aContent.kPriorityPerfect);
-    
+
     let bugType;
     if (subjectMatch[1])
       bugType = kBugMessage_Request;
@@ -184,7 +184,7 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
       bugType = kBugMessage_New;
     else
       bugType = kBugMessage_Changed;
-    
+
     let iLastContentLine = aBodyLines.length - 1;
     // walk backwards until we get to "Configure bugmail:"
     while (iLastContentLine > 3 &&
@@ -193,7 +193,7 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
     }
     // decrement by 3, avoiding the configure line, the "--", and the blank.
     iLastContentLine -= 3;
-    
+
     // == New format: tell by "New:" in the subject (type: newchanged)
     // "Do not reply" block.
     // (1 newline)
@@ -214,7 +214,7 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
         if (!line && eatBlank)
           continue;
         eatBlank = false;
-        
+
         switch (state) {
           case kPS_DoNotReply:
             if (!line)
@@ -250,7 +250,7 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
     // Comment is after the first double-newline, although the initial block
     //  after the "Do not reply" block (newline delimited) is interesting-ish.
     // In theory, the summary is the most interesting part.
-    
+
     // == Change format: no "New:" in the subject (type: newchanged)
     // "Do not reply" block.  Ignore.
     // (1 newline)
@@ -275,7 +275,7 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
         if (!line && eatBlank)
           continue;
         eatBlank = false;
-        
+
         switch (state) {
           case kPS_DoNotReply:
             if (!line) {
@@ -363,7 +363,7 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
         if (!line && eatBlank)
           continue;
         eatBlank = false;
-        
+
         switch (state) {
           case kPS_RequestExplanation:
             requestSoFar += line;
@@ -417,26 +417,26 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
     }
     return true;
   },
-  
+
   process: function gp_bug_attr_process(aGlodaMessage, aRawReps, aIsNew,
                                         aCallbackHandle) {
     let aMimeMsg = aRawReps.mime;
     let seenBugs = {};
     if (aMimeMsg !== null) {
       let match;
-      
+
       let bugsReferenced = [];
       let meta = {subject: aGlodaMessage.subject, bug: true};
-      
+
       if ((aGlodaMessage.from.value == "bugzilla-daemon@mozilla.org") &&
           (match = this._bugSubjectRegex.exec(aGlodaMessage.subject)) !== null) {
-        
+
         if (aRawReps.bodyLines && aRawReps.content)
           this.contentWhittle(aGlodaMessage, meta, aRawReps.bodyLines,
             aRawReps.content);
         else
           this._log.debug("No body/content, skipping content whittling.");
-        
+
         // it _is_ a bug!
         // -- Create the bug attribute
         let bugNum = parseInt(match[4]);
@@ -447,11 +447,22 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
         let authorString = meta.author || aMimeMsg.headers["x-bugzilla-who"];
 this._log.debug("author string: " + authorString);
         let [authorIdentities] = yield aCallbackHandle.pushAndGo(
-          Gloda.getOrCreateMailIdentities(aCallbackHandle, authorString))
+          Gloda.getOrCreateMailIdentities(aCallbackHandle, authorString));
         if (authorIdentities.length)
           aGlodaMessage.from = authorIdentities[0];
+
+        // if we are in a version of gloda with notability support...
+        if (aGlodaMessage.notability !== undefined) {
+          // give a bonus to bugs that have a lot of commentary, let ones with a
+          //  moderate amount be, and badly hurt those with none.
+          let contentString = aRawReps.content.getContentString();
+          if (contentString.length > 400)
+            aGlodaMessage.notability += 2;
+          else if (contentString.length < 100)
+          aGlodaMessage.notability -= 3;
+        }
       }
-      
+
       while ((match = this._bugRegex.exec(aMimeMsg.body)) !== null) {
         let bugNum = parseInt(match[1]);
         if (!(bugNum in seenBugs)) {
@@ -466,7 +477,7 @@ this._log.debug("author string: " + authorString);
           bugsReferenced.push(new Bug(bugNum));
         }
       }
-    
+
       if (bugsReferenced.length)
         aGlodaMessage.bugsReferenced = bugsReferenced;
       if (meta.attachmentNumber)
@@ -476,6 +487,17 @@ this._log.debug("author string: " + authorString);
     }
 
     yield Gloda.kWorkDone;
+  },
+
+  /**
+   * Hurt bugs.  If we could stomach the content whittling cost (and we probably
+   *  can, I'm just being lazy) it would be nice to use the same logic we used
+   *  during indexing.
+   */
+  score: function gp_bug_attr_score(aMessage, aContext) {
+    if (aMessage.bug)
+      return -3;
+    return 0;
   }
 };
 
