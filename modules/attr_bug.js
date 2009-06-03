@@ -90,7 +90,7 @@ let BugzillaAttr = {
     this._bugRegex = new RegExp("bug {1,2}#?(\\d{4,7})", "gi");
     this._bugLinkRegex = new RegExp(
       "https://bugzilla\\.mozilla\\.org/show_bug\\.cgi\\?id=(\\d{4,7})", "gi");
-    let emailSnip = "([^<\\n]+<[^>\\n]+>)";
+    let emailSnip = "(.*?)";
     // group 1: "BLAH asked/granted/requested:" if present
     // group 2: "BLAH" (if 1 present)
     // group 3: "asked/granted/requested" (if 1 present)
@@ -101,7 +101,7 @@ let BugzillaAttr = {
         "\\[Bug (\\d{4,7})\\] (New: )?");
     this._changedRegex = new RegExp("^" + emailSnip + " changed:$");
     this._commentRegex = new RegExp(
-      "^--- #\d+ from " + emailSnip + "  \d{4}-[^-]+ ---$");
+      "^--- Comment #\\d+ from " + emailSnip + "  \\d{4}.*? ---$");
     // group 1: requester
     // group 2: asked/granted/denied
     // group 3: requestee
@@ -160,14 +160,9 @@ let BugzillaAttr = {
       });
 
   },
-
-  contentWhittle: function gp_bug_attr_contentWhittle(aGlodaMessage,
+  
+  contentWhittle: function gp_bug_attr_contentWhittle(
       aMeta, aBodyLines, aContent) {
-    if (!aGlodaMessage.bug && !aMeta.bug) {
-this._log.debug("not a bug, bailing");
-      return false;
-    }
-
     let subjectMatch = this._bugSubjectRegex.exec(aMeta.subject);
     if (!subjectMatch) {
 this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
@@ -223,20 +218,40 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
           case kPS_KeyValue:
             // values can span lines.  we can tell if there is no colon.
             if (!line) {
-              state = kPS_Comment;
+              state = kPS_Who;
               eatBlank = true;
               aContent.keyValue(key, value);
             }
             line = line.trim();
             let colonIndex = line.indexOf(":");
             if (colonIndex >= 0) {
-              if (key)
-                aContent.keyValue(key, value);
               key = line.substring(0, colonIndex);
               value = line.substring(colonIndex+2);
+              if (key) {
+                aContent.keyValue(key, value);
+                if (key == "ReportedBy")
+                  aMeta.author = value;
+              }
             }
             else
               value += line;
+            break;
+          case kPS_Who:
+            // Is this the "BLAH changed:" line or a "--- Comment" line?
+            if (line.indexOf("--- ") != 0 ) { // "BLAH changed:"
+              let changedMatch = this._changedRegex.exec(line);
+              if (changedMatch)
+                aMeta.author = changedMatch[1];
+              state = kPS_Comment;
+              eatBlank = true;
+            }
+            else {
+              let commentMatch = this._commentRegex.exec(line);
+              if (commentMatch)
+                aMeta.author = commentMatch[1];
+              state = kPS_Comment;
+              eatBlank = true;
+            }
             break;
           case kPS_Comment:
             aContent.content(aBodyLines.slice(iLine, iLastContentLine));
