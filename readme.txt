@@ -11,7 +11,7 @@ you should do the following:
 	       e.g, c:\dev or /home/user/dev
   2. Put the full path to the folder (e.g. c:\dev\gpbugzilla on
      Windows, /home/user/dev/gpbugzilla on Linux) in a file named
-     gpbugzilla@mozilla.messaging.inc. and copy that file to
+     gpbugzilla@mozillamessaging.com and copy that file to
      [your profile folder]\extensions\
   3. Restart Firefox.
 
