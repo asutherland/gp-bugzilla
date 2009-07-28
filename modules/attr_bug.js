@@ -160,7 +160,7 @@ let BugzillaAttr = {
       });
 
   },
-  
+
   contentWhittle: function gp_bug_attr_contentWhittle(
       aMeta, aBodyLines, aContent) {
     let subjectMatch = this._bugSubjectRegex.exec(aMeta.subject);
@@ -220,18 +220,26 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
             if (!line) {
               state = kPS_Who;
               eatBlank = true;
-              aContent.keyValue(key, value);
+              // flush any pending key/value
+              if (key) {
+                if (key == "ReportedBy")
+                  aMeta.author = value;
+                aContent.keyValue(key, value);
+                key = value = null;
+              }
+              continue;
             }
             line = line.trim();
             let colonIndex = line.indexOf(":");
             if (colonIndex >= 0) {
-              key = line.substring(0, colonIndex);
-              value = line.substring(colonIndex+2);
+              // if we had a key from a previous line not yet flushed, flush it
               if (key) {
                 aContent.keyValue(key, value);
                 if (key == "ReportedBy")
                   aMeta.author = value;
               }
+              key = line.substring(0, colonIndex);
+              value = line.substring(colonIndex+2);
             }
             else
               value += line;
@@ -327,7 +335,11 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
             if (!line) {
               state = kPS_Who;
               eatBlank = true;
-              aContent.keyValueDelta(key, oldValue, newValue);
+              // flush any pending key/value stuff
+              if (key) {
+                aContent.keyValueDelta(key, oldValue, newValue);
+                key = oldValue = newValue = null;
+              }
             }
             let what = line.substring(0, tableDiv1).trim();
             let oldBit = line.substring(tableDiv1+1, tableDiv2).trim();
@@ -339,7 +351,9 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
                 newValue += newBit;
               }
               else {
-                aContent.keyValueDelta(key, oldValue, newValue);
+                // flush any pending key
+                if (key)
+                  aContent.keyValueDelta(key, oldValue, newValue);
                 key = what;
                 oldValue = oldBit;
                 newValue = newBit;
@@ -447,8 +461,7 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
           (match = this._bugSubjectRegex.exec(aGlodaMessage.subject)) !== null) {
 
         if (aRawReps.bodyLines && aRawReps.content)
-          this.contentWhittle(aGlodaMessage, meta, aRawReps.bodyLines,
-            aRawReps.content);
+          this.contentWhittle(meta, aRawReps.bodyLines, aRawReps.content);
         else
           this._log.debug("No body/content, skipping content whittling.");
 
@@ -460,7 +473,6 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
 
         // contentWhittle tried to figure out the author with real name
         let authorString = meta.author || aMimeMsg.headers["x-bugzilla-who"];
-this._log.debug("author string: " + authorString);
         let [authorIdentities] = yield aCallbackHandle.pushAndGo(
           Gloda.getOrCreateMailIdentities(aCallbackHandle, authorString));
         if (authorIdentities.length)
