@@ -43,6 +43,8 @@ const Cr = Components.results;
 const Cu = Components.utils;
 
 Cu.import("resource://app/modules/gloda/log4moz.js");
+Cu.import("resource://app/modules/StringBundle.js");
+
 Cu.import("resource://app/modules/gloda/public.js");
 
 Cu.import("resource://gpbugzilla/modules/noun_bug.js");
@@ -79,6 +81,7 @@ const REQUEST_MAP = {
 
 let BugzillaAttr = {
   providerName: EXT_NAME,
+  strings: new StringBundle("chrome://gpbugzilla/locale/gpbugzilla.properties"),
   _log: null,
   _bugRegex: null,
   _bugLinkRegex: null,
@@ -122,6 +125,7 @@ let BugzillaAttr = {
       attributeType: Gloda.kAttrDerived,
       attributeName: "bugsReferenced",
       singular: false,
+      facet: true,
       subjectNouns: [Gloda.NOUN_MESSAGE],
       objectNoun: Gloda.lookupNoun("bug"),
       parameterNoun: null,
@@ -142,6 +146,7 @@ let BugzillaAttr = {
       attributeType: Gloda.kAttrDerived,
       attributeName: "bugAttachment",
       singular: true,
+      facet: true,
       subjectNouns: [Gloda.NOUN_MESSAGE],
       objectNoun: Gloda.lookupNoun("bug-attachment"),
       parameterNoun: null,
@@ -153,6 +158,7 @@ let BugzillaAttr = {
       attributeType: Gloda.kAttrDerived,
       attributeName: "bugRequestAction",
       singular: true,
+      facet: true,
       subjectNouns: [Gloda.NOUN_MESSAGE],
       objectNoun: Gloda.lookupNoun("bug-request-action"),
       parameterNoun: null,
