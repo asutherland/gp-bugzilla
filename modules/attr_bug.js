@@ -484,15 +484,14 @@ this._log.debug("no subject match, bailing (subject: " + aMeta.subject + ")");
         if (authorIdentities.length)
           aGlodaMessage.from = authorIdentities[0];
 
-        // if we are in a version of gloda with notability support...
-        if (aGlodaMessage.notability !== undefined) {
+        if (aRawReps.content) {
           // give a bonus to bugs that have a lot of commentary, let ones with a
           //  moderate amount be, and badly hurt those with none.
           let contentString = aRawReps.content.getContentString();
           if (contentString.length > 400)
             aGlodaMessage.notability += 2;
           else if (contentString.length < 100)
-          aGlodaMessage.notability -= 3;
+            aGlodaMessage.notability -= 3;
         }
       }
 
